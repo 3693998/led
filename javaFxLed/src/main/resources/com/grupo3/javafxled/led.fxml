@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import com.grupo3.javafxled.ShapeLed?>
+
+
+<ShapeLed fx:id="shapeLed" onMouseClicked="#stopLed" onMouseEntered="#editColor"
+          prefHeight="349.0" prefWidth="522.0" xmlns="http://javafx.com/javafx/19" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.grupo3.javafxled.LedController"/>
