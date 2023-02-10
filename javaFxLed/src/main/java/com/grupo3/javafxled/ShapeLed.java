@@ -15,6 +15,7 @@
  */
 package com.grupo3.javafxled;
 
+import java.util.Random;
 import javafx.animation.AnimationTimer;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.BooleanPropertyBase;
@@ -23,11 +24,16 @@ import javafx.beans.property.LongPropertyBase;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.value.ChangeListener;
+import javafx.event.EventHandler;
+import javafx.event.EventType;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.effect.BlurType;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.effect.InnerShadow;
+import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.Border;
 import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.CycleMethod;
@@ -36,45 +42,44 @@ import javafx.scene.paint.RadialGradient;
 import javafx.scene.paint.Stop;
 import javafx.scene.shape.Ellipse;
 
-
 /**
- * Created by
- * User: hansolo
- * Date: 05.04.13
- * Time: 14:39
+ * Created by User: hansolo Date: 05.04.13 Time: 14:39
  */
 public class ShapeLed extends Region {
-    private static final double   PREFERRED_SIZE    = 16;
-    private static final double   MINIMUM_SIZE      = 8;
-    private static final double   MAXIMUM_SIZE      = 1024;
-    private static final long     SHORTEST_INTERVAL = 50_000_000l;
-    private static final long     LONGEST_INTERVAL  = 5_000_000_000l;
+
+    private static final double PREFERRED_SIZE = 16;
+    private static final double MINIMUM_SIZE = 8;
+    private static final double MAXIMUM_SIZE = 1024;
+    private static final long SHORTEST_INTERVAL = 50_000_000l;
+    private static final long LONGEST_INTERVAL = 5_000_000_000l;
 
     private ObjectProperty<Color> ledColor;
-    private BooleanProperty       on;
-    private boolean               _blinking = false;
-    private BooleanProperty       blinking;
-    private boolean               _frameVisible = true;
-    private BooleanProperty       frameVisible;
-    private InnerShadow           ledOnShadow;
-    private InnerShadow           ledOffShadow;
-    private LinearGradient        frameGradient;
-    private LinearGradient        ledOnGradient;
-    private LinearGradient        ledOffGradient;
-    private RadialGradient        highlightGradient;
-    private long                  lastTimerCall;
-    private long                  _interval = 500_000_000l;
-    private LongProperty          interval;
-    private final AnimationTimer  timer;
-
-
-
+    private BooleanProperty on;
+    private boolean _blinking = false;
+    private BooleanProperty blinking;
+    private boolean _frameVisible = true;
+    private BooleanProperty frameVisible;
+    private InnerShadow ledOnShadow;
+    private InnerShadow ledOffShadow;
+    private LinearGradient frameGradient;
+    private LinearGradient ledOnGradient;
+    private LinearGradient ledOffGradient;
+    private RadialGradient highlightGradient;
+    private long lastTimerCall;
+    private long _interval = 500_000_000l;
+    private LongProperty interval;
+    private final AnimationTimer timer;
+    Color aux;
+    Color borderColor;
+    LedController controler;
+    
     // ******************** Constructors **************************************
-    public ShapeLed() {        
+    public ShapeLed() {
         lastTimerCall = System.nanoTime();
-        timer         = new AnimationTimer() {
-            @Override public void handle(final long NOW) {
-                if (NOW > lastTimerCall + getInterval()) {                  
+        timer = new AnimationTimer() {
+            @Override
+            public void handle(final long NOW) {
+                if (NOW > lastTimerCall + getInterval()) {
                     setOn(!isOn());
                     lastTimerCall = NOW;
                 }
@@ -85,11 +90,10 @@ public class ShapeLed extends Region {
         registerListeners();
     }
 
-
     // ******************** Initialization ************************************
     private void init() {
-        if (getWidth() <= 0 || getHeight() <= 0 ||
-            getPrefWidth() <= 0 || getPrefHeight() <= 0) {
+        if (getWidth() <= 0 || getHeight() <= 0
+                || getPrefWidth() <= 0 || getPrefHeight() <= 0) {
             setPrefSize(PREFERRED_SIZE, PREFERRED_SIZE);
         }
         if (getMinWidth() <= 0 || getMinHeight() <= 0) {
@@ -113,16 +117,40 @@ public class ShapeLed extends Region {
         frameVisibleProperty().addListener(observable -> draw());
         onProperty().addListener(observable -> draw());
         ledColorProperty().addListener(observable -> recalc());
-    }
 
+        this.setOnMouseClicked((MouseEvent event) -> {
+           //preguntar a juanvi si esta parpadeando como puedo accder al boton y cambiar el boton a off ya que es una variable
+            if (this.isBlinking()){ 
+               this.setBlinking(false);
+            } else {
+                this.setBlinking(true);
+            }
+
+        });
+
+        this.setOnMouseEntered((MouseEvent event) -> {
+            aux = this.getLedColor();
+            this.setLedColor(Color.PINK);
+            
+        });
+        
+        this.setOnMouseExited((MouseEvent event) -> {
+
+           this.setLedColor(Color.RED);
+           this.setLedColor(aux);
+        });
+
+    }
 
     // ******************** Methods *******************************************
     public final boolean isOn() {
         return null == on ? false : on.get();
     }
+
     public final void setOn(final boolean ON) {
         onProperty().set(ON);
     }
+
     public final BooleanProperty onProperty() {
         if (null == on) {
             on = new SimpleBooleanProperty(this, "on", false);
@@ -133,6 +161,7 @@ public class ShapeLed extends Region {
     public final boolean isBlinking() {
         return null == blinking ? _blinking : blinking.get();
     }
+
     public final void setBlinking(final boolean BLINKING) {
         if (null == blinking) {
             _blinking = BLINKING;
@@ -146,10 +175,12 @@ public class ShapeLed extends Region {
             blinking.set(BLINKING);
         }
     }
+
     public final BooleanProperty blinkingProperty() {
-        if (null == blinking) {            
+        if (null == blinking) {
             blinking = new BooleanPropertyBase() {
-                @Override public void set(final boolean BLINKING) {
+                @Override
+                public void set(final boolean BLINKING) {
                     super.set(BLINKING);
                     if (BLINKING) {
                         timer.start();
@@ -158,10 +189,14 @@ public class ShapeLed extends Region {
                         setOn(false);
                     }
                 }
-                @Override public Object getBean() {
+
+                @Override
+                public Object getBean() {
                     return ShapeLed.this;
                 }
-                @Override public String getName() {
+
+                @Override
+                public String getName() {
                     return "blinking";
                 }
             };
@@ -172,6 +207,7 @@ public class ShapeLed extends Region {
     public final long getInterval() {
         return null == interval ? _interval : interval.get();
     }
+
     public final void setInterval(final long INTERVAL) {
         if (null == interval) {
             _interval = clamp(SHORTEST_INTERVAL, LONGEST_INTERVAL, INTERVAL);
@@ -179,16 +215,22 @@ public class ShapeLed extends Region {
             interval.set(INTERVAL);
         }
     }
+
     public final LongProperty intervalProperty() {
-        if (null == interval) {                        
+        if (null == interval) {
             interval = new LongPropertyBase() {
-                @Override public void set(final long INTERVAL) {
+                @Override
+                public void set(final long INTERVAL) {
                     super.set(clamp(SHORTEST_INTERVAL, LONGEST_INTERVAL, INTERVAL));
                 }
-                @Override public Object getBean() {
+
+                @Override
+                public Object getBean() {
                     return ShapeLed.this;
                 }
-                @Override public String getName() {
+
+                @Override
+                public String getName() {
                     return "interval";
                 }
             };
@@ -199,26 +241,38 @@ public class ShapeLed extends Region {
     public final boolean isFrameVisible() {
         return null == frameVisible ? _frameVisible : frameVisible.get();
     }
+
     public final void setFrameVisible(final boolean FRAME_VISIBLE) {
         if (null == frameVisible) {
-            _frameVisible = FRAME_VISIBLE;            
+            _frameVisible = FRAME_VISIBLE;
         } else {
             frameVisible.set(FRAME_VISIBLE);
         }
     }
+
     public final BooleanProperty frameVisibleProperty() {
         if (null == frameVisible) {
-            frameVisible = new SimpleBooleanProperty(this, "frameVisible", _frameVisible);            
+            frameVisible = new SimpleBooleanProperty(this, "frameVisible", _frameVisible);
         }
         return frameVisible;
+    }
+   // getter and setter boderColor
+    public Color getBorderColor() {
+        return borderColor;
+    }
+
+    public void setBorderColor(Color borderColor) {
+        this.borderColor = borderColor;
     }
 
     public final Color getLedColor() {
         return null == ledColor ? Color.RED : ledColor.get();
     }
+
     public final void setLedColor(final Color LED_COLOR) {
         ledColorProperty().set(LED_COLOR);
     }
+
     public final ObjectProperty<Color> ledColorProperty() {
         if (null == ledColor) {
             ledColor = new SimpleObjectProperty<>(this, "ledColor", Color.RED);
@@ -226,88 +280,97 @@ public class ShapeLed extends Region {
         return ledColor;
     }
 
-
     // ******************** Utility Methods ***********************************
     public static long clamp(final long MIN, final long MAX, final long VALUE) {
-        if (VALUE < MIN) return MIN;
-        if (VALUE > MAX) return MAX;
+        if (VALUE < MIN) {
+            return MIN;
+        }
+        if (VALUE > MAX) {
+            return MAX;
+        }
         return VALUE;
     }
 
-
     // ******************** Resize/Redraw *************************************
     private void recalc() {
-        double size  = getWidth() < getHeight() ? getWidth() : getHeight();
+        double size = getWidth() < getHeight() ? getWidth() : getHeight();
 
         ledOffShadow = new InnerShadow(BlurType.TWO_PASS_BOX, Color.rgb(0, 0, 0, 0.65), 0.07 * size, 0, 0, 0);
-        
-        ledOnShadow  = new InnerShadow(BlurType.TWO_PASS_BOX, Color.rgb(0, 0, 0, 0.65), 0.07 * size, 0, 0, 0);
+
+        ledOnShadow = new InnerShadow(BlurType.TWO_PASS_BOX, Color.rgb(0, 0, 0, 0.65), 0.07 * size, 0, 0, 0);
         ledOnShadow.setInput(new DropShadow(BlurType.TWO_PASS_BOX, ledColor.get(), 0.36 * size, 0, 0, 0));
-        
+
         frameGradient = new LinearGradient(0.14 * size, 0.14 * size,
-                                           0.84 * size, 0.84 * size,
-                                           false, CycleMethod.NO_CYCLE,
-                                           new Stop(0.0, Color.rgb(20, 20, 20, 0.65)),
-                                           new Stop(0.15, Color.rgb(20, 20, 20, 0.65)),
-                                           new Stop(0.26, Color.rgb(41, 41, 41, 0.65)),
-                                           new Stop(0.26, Color.rgb(41, 41, 41, 0.64)),
-                                           new Stop(0.85, Color.rgb(200, 200, 200, 0.41)),
-                                           new Stop(1.0, Color.rgb(200, 200, 200, 0.35)));
+                0.84 * size, 0.84 * size,
+                false, CycleMethod.NO_CYCLE,
+                new Stop(0.0, Color.rgb(20, 20, 20, 0.65)),
+                new Stop(0.15, Color.rgb(20, 20, 20, 0.65)),
+                new Stop(0.26, Color.rgb(41, 41, 41, 0.65)),
+                new Stop(0.26, Color.rgb(41, 41, 41, 0.64)),
+                new Stop(0.85, this.getBorderColor()),
+                new Stop(1.0, this.getBorderColor()));
 
         ledOnGradient = new LinearGradient(0.25 * size, 0.25 * size,
-                                           0.74 * size, 0.74 * size,
-                                           false, CycleMethod.NO_CYCLE,
-                                           new Stop(0.0, ledColor.get().deriveColor(0d, 1d, 0.77, 1d)),
-                                           new Stop(0.49, ledColor.get().deriveColor(0d, 1d, 0.5, 1d)),
-                                           new Stop(1.0, ledColor.get()));
+                0.74 * size, 0.74 * size,
+                false, CycleMethod.NO_CYCLE,
+                new Stop(0.0, ledColor.get().deriveColor(0d, 1d, 0.77, 1d)),
+                new Stop(0.49, ledColor.get().deriveColor(0d, 1d, 0.5, 1d)),
+                new Stop(1.0, ledColor.get()));
 
         ledOffGradient = new LinearGradient(0.25 * size, 0.25 * size,
-                                            0.74 * size, 0.74 * size,
-                                            false, CycleMethod.NO_CYCLE,
-                                            new Stop(0.0, ledColor.get().deriveColor(0d, 1d, 0.20, 1d)),
-                                            new Stop(0.49, ledColor.get().deriveColor(0d, 1d, 0.13, 1d)),
-                                            new Stop(1.0, ledColor.get().deriveColor(0d, 1d, 0.2, 1d)));
+                0.74 * size, 0.74 * size,
+                false, CycleMethod.NO_CYCLE,
+                new Stop(0.0, ledColor.get().deriveColor(0d, 1d, 0.20, 1d)),
+                new Stop(0.49, ledColor.get().deriveColor(0d, 1d, 0.13, 1d)),
+                new Stop(1.0, ledColor.get().deriveColor(0d, 1d, 0.2, 1d)));
 
         highlightGradient = new RadialGradient(0, 0,
-                                               0.3 * size, 0.3 * size,
-                                               0.29 * size,
-                                               false, CycleMethod.NO_CYCLE,
-                                               new Stop(0.0, Color.WHITE),
-                                               new Stop(1.0, Color.TRANSPARENT));
+                0.3 * size, 0.3 * size,
+                0.29 * size,
+                false, CycleMethod.NO_CYCLE,
+                new Stop(0.0, Color.WHITE),
+                new Stop(1.0, Color.TRANSPARENT));
         draw();
     }
-    
-    private void draw() {        
-        double width  = getWidth();
+
+    private void draw() {
+
+        double width = getWidth();
         double height = getHeight();
-        if (width <= 0 || height <= 0) return;
-        
+        if (width <= 0 || height <= 0) {
+            return;
+        }
+
         double centerX = width / 2;
         double centerY = height / 2;
-        
-        double size   = width < height ? width / 2 : height / 2;
+
+        double size = width < height ? width / 2 : height / 2;
 
         // Limpia la región y comienza a dibujar de nuevo
         getChildren().clear();
-                        
-        if (isFrameVisible()) {          
+
+        if (isFrameVisible()) {
             var oval1 = new Ellipse(centerX, centerY, size, size);
             oval1.setFill(frameGradient);
+
             getChildren().add(oval1);
+
         }
-        
+
         var oval2 = new Ellipse(centerX, centerY, 0.72 * size, 0.72 * size);
         if (isOn()) {
             oval2.setEffect(ledOnShadow);
             oval2.setFill(ledOnGradient);
+
         } else {
             oval2.setEffect(ledOffShadow);
             oval2.setFill(ledOffGradient);
         }
-         getChildren().add(oval2);
-        
+        getChildren().add(oval2);
+
         var oval3 = new Ellipse(centerX, centerY, 0.58 * size, 0.58 * size);
         oval3.setFill(highlightGradient);
         getChildren().add(oval3);
+
     }
 }

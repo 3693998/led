@@ -4,18 +4,17 @@
  */
 package com.grupo3.javafxled;
 
+import com.grupo3.javafxled.ShapeLed;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.Random;
 import java.util.ResourceBundle;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.value.ChangeListener;
-import javafx.event.Event;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-
+import javafx.scene.control.ColorPicker;
+import javafx.scene.control.ToggleButton;
+import javafx.scene.input.DragEvent;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.paint.Color;
 
 /**
  * FXML Controller class
@@ -26,39 +25,46 @@ public class LedController implements Initializable {
 
     @FXML
     private ShapeLed shapeLed;
-    // ejericcio 2  Modifica la propiedad hover del control para cambiar su color al pasar el ratón por encima.
     @FXML
-    void editColor(MouseEvent event) {
-      
+    private ColorPicker pickerLed;
+    @FXML
+    private ColorPicker pickerBorde;
+    @FXML
+    private ToggleButton bootnOn;
+
+    /**
+     * Initializes the controller class.
+     */
+    @Override
+    public void initialize(URL url, ResourceBundle rb) {
+        // TODO
+    }
+
+    @FXML
+    private void cambioLed(ActionEvent event) {
+       
+    shapeLed.setLedColor(pickerLed.getValue());
+    shapeLed.setBorderColor(pickerLed.getValue());
+
+    }
+
+    @FXML
+    private void cambioBorder(ActionEvent event) {
         
-      Random random = new Random();
-      float a = random.nextFloat();
-      float b = random.nextFloat();
-      float c = random.nextFloat();
-      float d = random.nextFloat();
-      Color colorRandom = new Color(a, b, c, d);
-        
-      shapeLed.setLedColor(colorRandom.brighter());
         
     }
 
-    // ejercicio 1 Añade un listener al control para que, al hacer click sobre el mismo, se detenga o empiece a parpadear.
     @FXML
-    void stopLed(MouseEvent event) {
-
+    private void onLed(ActionEvent event) {
+        bootnOn.setText("On");
         if (shapeLed.isBlinking()) {
             shapeLed.setBlinking(false);
+
         } else {
+            bootnOn.setText("Off");
             shapeLed.setBlinking(true);
 
         }
-
-        event.consume();
-    }
-
-    @Override
-    public void initialize(URL url, ResourceBundle rb) {
-
     }
 
 }
