@@ -15,7 +15,7 @@
  */
 package com.grupo3.javafxled;
 
-import java.util.Random;
+
 import javafx.animation.AnimationTimer;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.BooleanPropertyBase;
@@ -24,16 +24,10 @@ import javafx.beans.property.LongPropertyBase;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
-import javafx.beans.value.ChangeListener;
-import javafx.event.EventHandler;
-import javafx.event.EventType;
-import javafx.scene.canvas.Canvas;
-import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.effect.BlurType;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.effect.InnerShadow;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.Border;
 import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.CycleMethod;
@@ -41,6 +35,7 @@ import javafx.scene.paint.LinearGradient;
 import javafx.scene.paint.RadialGradient;
 import javafx.scene.paint.Stop;
 import javafx.scene.shape.Ellipse;
+import javafx.scene.shape.Rectangle;
 
 /**
  * Created by User: hansolo Date: 05.04.13 Time: 14:39
@@ -65,14 +60,17 @@ public class ShapeLed extends Region {
     private LinearGradient ledOnGradient;
     private LinearGradient ledOffGradient;
     private RadialGradient highlightGradient;
+    // Linear para usar en el rectangulo
+    private LinearGradient linear;
     private long lastTimerCall;
     private long _interval = 500_000_000l;
     private LongProperty interval;
     private final AnimationTimer timer;
-    Color aux;
-    Color borderColor;
-    LedController controler;
-    
+    // Para guardar el color en la variable que se utiliza en el ejercicio 2
+    private Color aux;
+    // Propiedad borderColor
+    private ObjectProperty<Color> borderColor;
+
     // ******************** Constructors **************************************
     public ShapeLed() {
         lastTimerCall = System.nanoTime();
@@ -88,6 +86,7 @@ public class ShapeLed extends Region {
         init();
         initGraphics();
         registerListeners();
+
     }
 
     // ******************** Initialization ************************************
@@ -116,28 +115,36 @@ public class ShapeLed extends Region {
         heightProperty().addListener(observable -> recalc());
         frameVisibleProperty().addListener(observable -> draw());
         onProperty().addListener(observable -> draw());
+        
+        //********** Rectangulo Ejercicio 5 puedes probarlo ********************
+        //frameVisibleProperty().addListener(observable -> drawRectangule());
+        //onProperty().addListener(observable -> drawRectangule());
+        
+        
         ledColorProperty().addListener(observable -> recalc());
+        borderColorProperty().addListener(observable -> recalc());
 
+        //************** Ejercicio 1 ******************************************
         this.setOnMouseClicked((MouseEvent event) -> {
-           //preguntar a juanvi si esta parpadeando como puedo accder al boton y cambiar el boton a off ya que es una variable
-            if (this.isBlinking()){ 
-               this.setBlinking(false);
+
+            if (this.isBlinking()) {
+                this.setBlinking(false);
+
             } else {
                 this.setBlinking(true);
             }
 
         });
-
+        //************** Ejercicio 2 ******************************************
         this.setOnMouseEntered((MouseEvent event) -> {
             aux = this.getLedColor();
             this.setLedColor(Color.PINK);
-            
-        });
-        
-        this.setOnMouseExited((MouseEvent event) -> {
 
-           this.setLedColor(Color.RED);
-           this.setLedColor(aux);
+        });
+
+        this.setOnMouseExited((MouseEvent event) -> {
+            this.setLedColor(aux);
+
         });
 
     }
@@ -256,15 +263,25 @@ public class ShapeLed extends Region {
         }
         return frameVisible;
     }
-   // getter and setter boderColor
-    public Color getBorderColor() {
+
+    //************************** Ejercicio 3 *************************************************
+    //********************** getter and setter boderColor************************************
+    public final Color getBorderColor() {
+        return null == borderColor ? Color.RED : borderColor.get();
+    }
+
+    public final void setBorderColor(final Color borderColor) {
+        borderColorProperty().set(borderColor);
+    }
+
+    public final ObjectProperty<Color> borderColorProperty() {
+        if (null == borderColor) {
+            borderColor = new SimpleObjectProperty<>(this, "borderColor", getBorderColor());
+        }
         return borderColor;
     }
 
-    public void setBorderColor(Color borderColor) {
-        this.borderColor = borderColor;
-    }
-
+    //****************************************************************************************** 
     public final Color getLedColor() {
         return null == ledColor ? Color.RED : ledColor.get();
     }
@@ -307,8 +324,8 @@ public class ShapeLed extends Region {
                 new Stop(0.15, Color.rgb(20, 20, 20, 0.65)),
                 new Stop(0.26, Color.rgb(41, 41, 41, 0.65)),
                 new Stop(0.26, Color.rgb(41, 41, 41, 0.64)),
-                new Stop(0.85, this.getBorderColor()),
-                new Stop(1.0, this.getBorderColor()));
+                new Stop(0.85, getBorderColor()),
+                new Stop(1.0, getBorderColor()));
 
         ledOnGradient = new LinearGradient(0.25 * size, 0.25 * size,
                 0.74 * size, 0.74 * size,
@@ -330,7 +347,17 @@ public class ShapeLed extends Region {
                 false, CycleMethod.NO_CYCLE,
                 new Stop(0.0, Color.WHITE),
                 new Stop(1.0, Color.TRANSPARENT));
+
+        //********* Para el led rectangulo, tienes queser un LinearGradient****
+        linear = new LinearGradient(0, 0,
+                0.3 * size, 0.3 * size,
+                false, CycleMethod.NO_CYCLE,
+                new Stop(0.0, Color.WHITE),
+                new Stop(1.0, Color.TRANSPARENT));
+
         draw();
+        //*** rectangulo  ejercicio 5 ********
+        //drawRectangule();
     }
 
     private void draw() {
@@ -352,16 +379,13 @@ public class ShapeLed extends Region {
         if (isFrameVisible()) {
             var oval1 = new Ellipse(centerX, centerY, size, size);
             oval1.setFill(frameGradient);
-
             getChildren().add(oval1);
-
         }
 
         var oval2 = new Ellipse(centerX, centerY, 0.72 * size, 0.72 * size);
         if (isOn()) {
             oval2.setEffect(ledOnShadow);
             oval2.setFill(ledOnGradient);
-
         } else {
             oval2.setEffect(ledOffShadow);
             oval2.setFill(ledOffGradient);
@@ -371,6 +395,47 @@ public class ShapeLed extends Region {
         var oval3 = new Ellipse(centerX, centerY, 0.58 * size, 0.58 * size);
         oval3.setFill(highlightGradient);
         getChildren().add(oval3);
+
+    }
+
+    //********************** Ejercicio 5 **************************************
+    private void drawRectangule() {
+
+        double width = getWidth();
+        double height = getHeight();
+        if (width <= 0 || height <= 0) {
+            return;
+        }
+
+        double centerX = width / 2;
+        double centerY = height / 2;
+
+        double size = width < height ? width / 2 : height / 2;
+
+        // Limpia la región y comienza a dibujar de nuevo
+        getChildren().clear();
+
+        if (isFrameVisible()) {
+            var rect1 = new Rectangle(380, 200, size, size);
+            rect1.setFill(frameGradient);
+            getChildren().add(rect1);
+
+        }
+
+        var rect2 = new Rectangle(417, 235, 0.72 * size, 0.72 * size);
+        if (isOn()) {
+            rect2.setEffect(ledOnShadow);
+            rect2.setFill(ledOnGradient);
+
+        } else {
+            rect2.setEffect(ledOffShadow);
+            rect2.setFill(ledOffGradient);
+        }
+        getChildren().add(rect2);
+
+        var rect3 = new Rectangle(454, 270, 0.58 * size, 0.58 * size);
+        rect3.setFill(linear);
+        getChildren().add(rect3);
 
     }
 }
