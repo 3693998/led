@@ -11,6 +11,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.ColorPicker;
 import javafx.scene.control.ToggleButton;
+import javafx.scene.layout.Background;
 
 
 /**
@@ -36,7 +37,9 @@ public class LedController implements Initializable {
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         
-    }
+        bootnOn.setText("On");
+        bootnOn.setStyle("-fx-background-color: green;");
+    }   
 
     //********** Ejercicio 4 ***********************
     @FXML
@@ -57,17 +60,20 @@ public class LedController implements Initializable {
     @FXML
     private void onLed(ActionEvent event) {
 
-        bootnOn.setText("On");
+       
 
-        if (shapeLed.isBlinking()) {
-
-            shapeLed.setBlinking(false);
-
+        if (shapeLed.isOn()) {
+            bootnOn.setText("on");
+            bootnOn.setStyle("-fx-background-color: green;");
+            shapeLed.setOn(false);
+            
+           
         } else {
-
+              
             bootnOn.setText("Off");
-            shapeLed.setBlinking(true);
-
+            bootnOn.setStyle("-fx-background-color: red;");
+            shapeLed.setOn(true);
+             
         }
 
     }

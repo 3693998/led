@@ -113,12 +113,12 @@ public class ShapeLed extends Region {
     private void registerListeners() {
         widthProperty().addListener(observable -> recalc());
         heightProperty().addListener(observable -> recalc());
-        frameVisibleProperty().addListener(observable -> draw());
-        onProperty().addListener(observable -> draw());
+        //frameVisibleProperty().addListener(observable -> draw());
+        //onProperty().addListener(observable -> draw());
         
         //********** Rectangulo Ejercicio 5 puedes probarlo ********************
-        //frameVisibleProperty().addListener(observable -> drawRectangule());
-        //onProperty().addListener(observable -> drawRectangule());
+        frameVisibleProperty().addListener(observable -> drawRectangule());
+        onProperty().addListener(observable -> drawRectangule());
         
         
         ledColorProperty().addListener(observable -> recalc());
@@ -355,9 +355,9 @@ public class ShapeLed extends Region {
                 new Stop(0.0, Color.WHITE),
                 new Stop(1.0, Color.TRANSPARENT));
 
-        draw();
+        //draw();
         //*** rectangulo  ejercicio 5 ********
-        //drawRectangule();
+        drawRectangule();
     }
 
     private void draw() {
@@ -416,13 +416,14 @@ public class ShapeLed extends Region {
         getChildren().clear();
 
         if (isFrameVisible()) {
-            var rect1 = new Rectangle(380, 200, size, size);
+                                     
+            var rect1 = new Rectangle(centerX-size /2, centerY-size /2, size, size);
             rect1.setFill(frameGradient);
             getChildren().add(rect1);
 
         }
 
-        var rect2 = new Rectangle(417, 235, 0.72 * size, 0.72 * size);
+        var rect2 = new Rectangle(centerX-size * 0.72 /2 , centerY-size * 0.72 /2, 0.72 * size, 0.72 * size);
         if (isOn()) {
             rect2.setEffect(ledOnShadow);
             rect2.setFill(ledOnGradient);
@@ -433,7 +434,7 @@ public class ShapeLed extends Region {
         }
         getChildren().add(rect2);
 
-        var rect3 = new Rectangle(454, 270, 0.58 * size, 0.58 * size);
+        var rect3 = new Rectangle(centerX-size * 0.72 /2, centerY-size * 0.72 /2, 0.58 * size, 0.58 * size);
         rect3.setFill(linear);
         getChildren().add(rect3);
 

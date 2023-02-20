@@ -20,7 +20,7 @@ public class App extends Application {
         scene = new Scene(loadFXML("led"), 1163, 718);
         stage.setScene(scene);
         stage.show();
-        stage.setResizable(false);
+        
     }
 
     static void setRoot(String fxml) throws IOException {
